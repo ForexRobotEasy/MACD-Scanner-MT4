@@ -1,0 +1,106 @@
+
+//+------------------------------------------------------------------+
+//|                                                MACD Scanner MT4   |
+//|                                           Developer: Forex Robot Easy Team   |
+//|                                           Website: forexroboteasy.com   |
+//+------------------------------------------------------------------+
+
+// Include necessary libraries and define global variables
+
+#include <Trade\Trade.mqh>
+#include <MovingAverages\MA.mqh>
+#include <MovingAverages\ExpMA.mqh>
+#include <MovingAverages\MACD.mqh>
+#include <Controls\Button.mqh>
+#include <Controls\Label.mqh>
+#include <Controls\Edit.mqh>
+
+CTrade Trade;
+CExpMA ExpMA;
+CMACD MACD;
+CButton Button;
+CLabel Label;
+CEdit Edit;
+
+// Define input parameters
+
+input int FastEMA = 12;
+input int SlowEMA = 26;
+input int SignalSMA = 9;
+input ENUM_TIMEFRAMES Timeframe = PERIOD_H1;
+
+//+------------------------------------------------------------------+
+//| Custom indicator initialization function                         |
+//+------------------------------------------------------------------+
+
+int OnInit()
+{
+   // Create a user-friendly interface
+   Button.Create(0, 'Start', 0, 10, 10, 100, 30);
+   Label.Create(0, 'MACD Scanner MT4', 0, 10, 50, 200, 30);
+   Edit.Create(0, 'Enter symbol', 0, 10, 90, 100, 30);
+
+   return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator deinitialization function                       |
+//+------------------------------------------------------------------+
+
+void OnDeinit(const int reason)
+{
+   // Clean up and release resources
+   Button.Destroy();
+   Label.Destroy();
+   Edit.Destroy();
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator iteration function                              |
+//+------------------------------------------------------------------+
+
+void OnCalculate(const int rates_total, const int prev_calculated, const int begin, const double &price[])
+{
+   // Check if the 'Start' button was clicked
+   if(Button.Clicked())
+   {
+      // Get the symbol entered by the user
+      string symbol = Edit.GetText();
+
+      // Set symbol and timeframe for MACD calculation
+      MACD.SetSymbol(symbol);
+      MACD.SetTimeframe(Timeframe);
+
+      // Calculate MACD values
+      MACD.Calculate(rates_total, prev_calculated, begin, price);
+
+      // Get MACD trend values for multiple timeframes
+      for(int i = 0; i < ENUM_TIMEFRAMES_TOTAL; i++)
+      {
+         ENUM_TIMEFRAMES tf = (ENUM_TIMEFRAMES)i;
+         double macd_main = MACD.GetMainValue(tf);
+         double macd_signal = MACD.GetSignalValue(tf);
+
+         // Check if MACD trend condition is met
+         if(macd_main > macd_signal)
+         {
+            // Send alert notification
+            SendNotification('MACD trend condition met for ' + Symbol() + ' on ' + EnumToString(tf));
+         }
+      }
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator start function                                   |
+//+------------------------------------------------------------------+
+
+int start()
+{
+   // Display the user-friendly interface
+   Button.Draw();
+   Label.Draw();
+   Edit.Draw();
+
+   return(0);
+}
